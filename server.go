@@ -12,7 +12,7 @@ import (
 type CacheServer struct {
 	cache *Cache
 	peers []string
-	mu sync.Mutex
+	mu    sync.Mutex
 }
 
 var replicationHeader = `peer`
@@ -34,8 +34,8 @@ func (cs *CacheServer) SetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cs.cache.Set(req.Key, req.Value, 1 * time.Hour)
-	if r.Header.Get(replicationHeader) == ""{
+	cs.cache.Set(req.Key, req.Value, 1*time.Hour)
+	if r.Header.Get(replicationHeader) == "" {
 		go cs.replicateSet(req.Key, req.Value)
 	}
 	w.WriteHeader(http.StatusOK)
@@ -51,23 +51,21 @@ func (cs *CacheServer) GetHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"value": value})
 }
 
-func (cs *CacheServer) replicateSet(key, value string){
+func (cs *CacheServer) replicateSet(key, value string) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
 	req := struct {
-		Key string `json:"key"`
+		Key   string `json:"key"`
 		Value string `json:"value"`
 	}{
-		Key: key,
+		Key:   key,
 		Value: value,
 	}
 
-	
-
 	data, _ := json.Marshal(req)
-	for _, peer := range cs.peers{
-		go func (peer string)  {
+	for _, peer := range cs.peers {
+		go func(peer string) {
 			client := &http.Client{}
 			req, err := http.NewRequest("POST", peer+"/set", bytes.NewReader(data))
 			if err != nil {

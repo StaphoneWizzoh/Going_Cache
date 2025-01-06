@@ -1,15 +1,26 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
+var port string
+var peers string
+
 func main() {
-	cs := NewCacheServer()
-	cache := NewCache(5)
+
+	flag.StringVar(&port, "port", ":8080", "HTTP server port")
+	flag.StringVar(&peers, "peers", "", "Comma-separated list of peer addresses")
+	flag.Parse()
+
+	peerList := strings.Split(peers, ",")
+	cs := NewCacheServer(peerList)
+	cache := NewCache(10)
 	cache.startEvictionTicker(1 * time.Minute)
 
 	http.HandleFunc("/set", cs.SetHandler)

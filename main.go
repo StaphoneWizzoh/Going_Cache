@@ -4,9 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
-	"time"
 )
 
 var port string
@@ -18,18 +18,14 @@ func main() {
 	flag.StringVar(&peers, "peers", "", "Comma-separated list of peer addresses")
 	flag.Parse()
 
+	nodeID := fmt.Sprintf("%s%d", "node", rand.Intn(100))
 	peerList := strings.Split(peers, ",")
-	cs := NewCacheServer(peerList)
-	cache := NewCache(10)
-	cache.startEvictionTicker(1 * time.Minute)
+	cs := NewCacheServer(peerList, nodeID)
 
 	http.HandleFunc("/set", cs.SetHandler)
 	http.HandleFunc("/get", cs.GetHandler)
 
-	log.Println("Server listening at port: 8080")
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	log.Printf("Server listening at port: %s\n", port)
+	log.Fatal(http.ListenAndServe(port, nil))
+
 }
